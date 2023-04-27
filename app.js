@@ -4,7 +4,6 @@ const session = require('express-session');
 const usersModel = require('./models/w1users');
 const bcrypt = require('bcrypt');
 
-
 var MongoDBStore = require('connect-mongodb-session')(session);
 
 // app.use(session({
