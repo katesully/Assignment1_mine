@@ -11,10 +11,13 @@ var MongoDBStore = require('connect-mongodb-session')(session);
 //   store: MongoStore.create(options)
 // }));
 
+const dotenv = require('dotenv');
+dotenv.config();
+
 
 var dbStore = new MongoDBStore({
     // uri: 'mongodb://localhost:27017/connect_mongodb_session_test',
-    uri: 'mongodb://127.0.0.1:27017/connect_mongodb_session_test',
+    uri: 'mongodb+srv://${process.env.ATLAS_DB_USER}:${process.env.ATLAS_DB_PASSWORD}@assignment3.bqyrq6k.mongodb.net/comp2537w1?retryWrites=true&w=majority',
     collection: 'mySessions',
     // connectionOptions: {
     //     connectTimeoutMS: 300000000 
