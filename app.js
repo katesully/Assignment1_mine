@@ -131,6 +131,7 @@ app.get('/', (req, res) => {
 
 
 
+
 // signup route
 app.get('/signup', (req, res) => {
     res.send(
@@ -282,6 +283,7 @@ app.post('/login', async (req, res) => {
 });
 
 
+
 //only for authenticated users
 const authenticatedOnly = (req, res, next) => {
     if (!req.session.GLOBAL_AUTHENTICATED) {
@@ -290,11 +292,11 @@ const authenticatedOnly = (req, res, next) => {
     next();
 }
 
-app.use(authenticatedOnly);
+// app.use(authenticatedOnly);
 
 app.use(express.static('public'))
 
-app.get('/protectedRoute', (req, res) => {
+app.get('/protectedRoute', authenticatedOnly, (req, res) => {
     //serve one of the puppy images randomly
     // generate a random number between 1 and 3
     const randomImageNumber = Math.floor(Math.random() * 3) + 1;
@@ -315,22 +317,16 @@ app.get('/protectedRoute', (req, res) => {
 
 
 
-
 //signout route, destroy the session and redirect back to public route
 app.get('/signout', (req, res) => {
     req.session.destroy();
     res.redirect('/');
 });
 
-
-
-
 // if any non-assigned URLs are entered, display a 404 error message using get()
 app.get('*', (req, res) => {
     res.status(404).send('404 Error: Page not found');
 });
-
-
 
 
 
