@@ -184,6 +184,7 @@ app.post('/signup', async (req, res) => {
 
     // create new user and redirect to login page
     const newUser = new usersModel({
+        name: req.body.name,
         username: req.body.username,
         password: bcrypt.hashSync(req.body.password, 10),
         type: req.body.type,
@@ -261,12 +262,22 @@ app.get('/protectedRoute', (req, res) => {
     // generate a random number between 1 and 3
     const randomImageNumber = Math.floor(Math.random() * 3) + 1;
     const imageName = `00${randomImageNumber}.jfif`;
-    HTMLresponse =
-    `Hello ${req.session.loggedUsername}
+    const loggedName = req.session.name;
+    const helloMessage = loggedName ? `Hello ${loggedName}` : 'Hello';
+    const HTMLresponse = `
+    ${helloMessage}
     <br>
     <img src="${imageName}" />
     <br>
-     <a href="signout"> Sign Out</a>`
+    <a href="signout">Sign Out</a>
+`;
+
+
+
+
+
+
+     
      
      //if inactive for one hour, redirect to signout route
         //if the user is active, reset the timer
