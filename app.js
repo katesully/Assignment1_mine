@@ -79,10 +79,7 @@ app.get('/', (req, res) => {
 
 });
 
-// if any non-assigned URLs are entered, display a 404 error message using get()
-app.get('*', (req, res) => {
-    res.status(404).send('404 Error: Page not found');
-});
+
 
 // login route
 
@@ -212,27 +209,27 @@ app.post('/signup', async (req, res) => {
     res.redirect('/login');
 });
      
-const Joi = require('joi');
-app.use(express.json());
+// const Joi = require('joi');
+// app.use(express.json());
 app.get('/login', async (req, res) => {
 
-//sanatize the input using Joi
+// //sanatize the input using Joi
 
-const schema = Joi.object({
-    password: Joi.string()
-})
+// const schema = Joi.object({
+//     password: Joi.string()
+// })
   
-schema.validate({});
-// -> { value: {}, error: '"username" is required' }
-// Also -
-try {
-    const value = await schema.validateAsync({ username: req.body.password });
-}
-catch (err) { 
-    console.log(err)
-    console.log("the password must be a string")
-    return
-}
+// schema.validate({});
+// // -> { value: {}, error: '"username" is required' }
+// // Also -
+// try {
+//     const value = await schema.validateAsync({ username: req.body.password });
+// }
+// catch (err) { 
+//     console.log(err)
+//     console.log("the password must be a string")
+//     return
+// }
 
     res.send(
         '<form action="/login" method="post">'
@@ -328,7 +325,10 @@ app.get('/signout', (req, res) => {
 
 
 
-
+// if any non-assigned URLs are entered, display a 404 error message using get()
+app.get('*', (req, res) => {
+    res.status(404).send('404 Error: Page not found');
+});
 
 
 
