@@ -23,7 +23,7 @@ app.use(bodyParser.json());
 
 
 // var dbStore = new MongoDBStore({
-//     uri: 'mongodb://localhost:27017/connect_mongodb_session_test',
+//     // uri: 'mongodb://localhost:27017/connect_mongodb_session_test',
 //     // uri: 'mongodb+srv://${process.env.ATLAS_DB_USER}:${process.env.ATLAS_DB_PASSWORD}@assignment3.bqyrq6k.mongodb.net/comp2537w1?retryWrites=true&w=majority',
 //     collection: 'mySessions',
 //     // connectionOptions: {
@@ -41,6 +41,21 @@ app.use(session({
 }));
 
 
+// middleware to check for session expiration
+const checkSessionExpiration = (req, res, next) => {
+    if (req.session.lastActivity && Date.now() - req.session.lastActivity > 3600000) {
+      // session has expired, redirect to signout route
+      res.redirect('/signout');
+    } else {
+      // update last activity timestamp and continue with next middleware
+      req.session.lastActivity = Date.now();
+      next();
+    }
+  };
+  
+  // apply middleware to all routes
+  app.use(checkSessionExpiration);
+  
 
 
 
@@ -64,6 +79,10 @@ app.get('/', (req, res) => {
 
 });
 
+// if any non-assigned URLs are entered, display a 404 error message using get()
+app.get('*', (req, res) => {
+    res.status(404).send('404 Error: Page not found');
+});
 
 // login route
 
@@ -184,16 +203,37 @@ app.post('/signup', async (req, res) => {
 
     // create new user and redirect to login page
     const newUser = new usersModel({
-        name: req.body.name,
-        username: req.body.username,
-        password: bcrypt.hashSync(req.body.password, 10),
-        type: req.body.type,
-    });
+    name: req.body.name,
+    username: req.body.username,
+    password: bcrypt.hashSync(req.body.password, 10),
+    type: req.body.type,
+});
     await newUser.save();
     res.redirect('/login');
 });
      
-app.get('/login', (req, res) => {
+const Joi = require('joi');
+app.use(express.json());
+app.get('/login', async (req, res) => {
+
+//sanatize the input using Joi
+
+const schema = Joi.object({
+    password: Joi.string()
+})
+  
+schema.validate({});
+// -> { value: {}, error: '"username" is required' }
+// Also -
+try {
+    const value = await schema.validateAsync({ username: req.body.password });
+}
+catch (err) { 
+    console.log(err)
+    console.log("the password must be a string")
+    return
+}
+
     res.send(
         '<form action="/login" method="post">'
         + '<input type="text" name="username" placeholder="Enter your username" />'
@@ -271,21 +311,13 @@ app.get('/protectedRoute', (req, res) => {
     <br>
     <a href="signout">Sign Out</a>
 `;
-
-
-
-
-
-
-     
-     
-     //if inactive for one hour, redirect to signout route
-        //if the user is active, reset the timer
-        req.session.cookie.maxAge = 3600000;
-
-
     res.send(HTMLresponse);
 });
+
+
+
+
+
 
 //signout route, destroy the session and redirect back to public route
 app.get('/signout', (req, res) => {
@@ -324,9 +356,6 @@ app.get('/protectedRouteforAdminsOnly', (req, res) => {
     res.send('<h1>protectedRouteAdminsonly</h1>');
 });
 
-// if any non-assigned URLs are entered, display a 404 error message using get()
-app.get('*', (req, res) => {
-    res.status(404).send('404 Error: Page not found');
-});
+
 
 module.exports = app;
