@@ -4,7 +4,7 @@ const session = require('express-session');
 const usersModel = require('./models/w1users');
 const bcrypt = require('bcrypt');
 
-var MongoDBStore = require('connect-mongodb-session')(session);
+// var MongoDBStore = require('connect-mongodb-session')(session);
 
 // app.use(session({
 //   secret: 'foo',
@@ -12,38 +12,50 @@ var MongoDBStore = require('connect-mongodb-session')(session);
 // }));
 
 const dotenv = require('dotenv');
-dotenv.config();
 
 
-var dbStore = new MongoDBStore({
-    // uri: 'mongodb://localhost:27017/connect_mongodb_session_test',
-    uri: 'mongodb+srv://${process.env.ATLAS_DB_USER}:${process.env.ATLAS_DB_PASSWORD}@assignment3.bqyrq6k.mongodb.net/comp2537w1?retryWrites=true&w=majority',
-    collection: 'mySessions',
-    // connectionOptions: {
-    //     connectTimeoutMS: 300000000 
-    // }
-});
 
-dbStore.on('error', function (error) {
-    console.log('Error connecting to MongoDB:', error);
-});
+// var dbStore = new MongoDBStore({
+//     uri: 'mongodb://localhost:27017/connect_mongodb_session_test',
+//     // uri: 'mongodb+srv://${process.env.ATLAS_DB_USER}:${process.env.ATLAS_DB_PASSWORD}@assignment3.bqyrq6k.mongodb.net/comp2537w1?retryWrites=true&w=majority',
+//     collection: 'mySessions',
+//     // connectionOptions: {
+//     //     connectTimeoutMS: 300000000 
+//     // }
+// });
 
+// dbStore.on('error', function (error) {
+//     console.log('Error connecting to MongoDB:', error);
+// });
 
 app.use(session({
     secret: 'secret secret secret',
-    store: dbStore,
+    // store: dbStore,
 }));
-
-
-
-
 
 
 //public route
 app.get('/', (req, res) => {
-    res.send('Hello World');
+
+    // if user is authenticated, redirect to protected route
+    //if the user is not authenticated, show a login button and a sign up button
+    // if the login button is pressed, redirect to login route
+    // if the sign up button is pressed, redirect to sign up route
+    if (req.session.GLOBAL_AUTHENTICATED) {
+        res.redirect('/protectedRoute');
+    } else {
+        res.send(
+            '<a href="/login">Login</a>'
+            + '<br>'
+            + '<a href="/signup">Sign up</a>'
+        );
+    }
+// res.send('Hello World');
+
 });
 
+
+// login route
 
 app.get('/login', (req, res) => {
     res.send(
@@ -54,6 +66,7 @@ app.get('/login', (req, res) => {
         + '</form>'
     )
 });
+
 
 // GLOBAL_AUTHENTICATED = false;
 app.use(express.urlencoded({ extended: false }));
@@ -97,7 +110,8 @@ app.get('/protectedRoute', (req, res) => {
     HTMLresponse =
     ` <h1> Protected Route </h1>
     <br>
-    <img src="${imageName}" />`
+    <img src="${imageName}" />
+     <a href="signup">Sign up</a>`
 
     res.send(HTMLresponse);
 });
