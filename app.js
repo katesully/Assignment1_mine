@@ -210,27 +210,27 @@ app.post('/signup', async (req, res) => {
     res.redirect('/login');
 });
      
-// const Joi = require('joi');
+const Joi = require('joi');
 // app.use(express.json());
 app.get('/login', async (req, res) => {
 
-// //sanatize the input using Joi
+//sanatize the input using Joi
 
-// const schema = Joi.object({
-//     password: Joi.string()
-// })
+const schema = Joi.object({
+    password: Joi.string()
+})
   
-// schema.validate({});
-// // -> { value: {}, error: '"username" is required' }
-// // Also -
-// try {
-//     const value = await schema.validateAsync({ username: req.body.password });
-// }
-// catch (err) { 
-//     console.log(err)
-//     console.log("the password must be a string")
-//     return
-// }
+schema.validate({});
+// -> { value: {}, error: '"username" is required' }
+// Also -
+try {
+    const value = await schema.validateAsync({ username: req.body.password });
+}
+catch (err) { 
+    console.log(err)
+    console.log("the password must be a string")
+    return
+}
 
     res.send(
         '<form action="/login" method="post">'
