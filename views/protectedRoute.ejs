@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css"
+rel="stylesheet" integrity="sha384-
+KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous">
+    <title>Document</title>
+   
+</head>
+<body>
+    <%- include('partials/header.ejs'); %>
+ 
+
+Hello <%= x %>!
+<h1>Protected Route</h1>
+<!-- <br>
+<img src="<%= y %>" /> -->
+<div class="container">
+<div class="row">
+    <div class="col-md">
+        <img src= 001.jfif style="width: 100%">
+    </div>
+    <div class="col-md">
+        <img src= 002.jfif style="width: 100%">
+    </div>
+    <div class="col-md">
+        <img src= 003.jfif style="width: 100%">
+    </div>
+  </div>
+</div>
+
+
+
+
+<% if (isAdmin) { %>
+    <h3>  Only admin can see this page </h3>
+  <% } %> 
+
+
+  <ul>
+    <% users.forEach(function(userItem){ %>
+    <li>
+      <ul>
+        <li>
+          <%= userItem.username %>
+        </li>
+        <li>
+          <%= userItem.type  %>
+          <form action="/flipUserStatus" method="post">
+            <input type="hidden" value="<%= userItem.username %>" name="username">
+            <button type="submit" class="btn btn-danger" name="action" value="demote">Demote to user</button>
+          </form>
+          <form action="/flipUserStatus" method="post">
+            <input type="hidden" value="<%= userItem.username  %>" name="username">
+            <button type="submit" class="btn btn-primary" name="action" value="promote">Promote to Admin</button>
+          </form>
+        </li>
+      </ul>
+    </li>
+    <% }); %>
+  </ul>
+
+  <!-- <form action="/addNewToDoItem" method="POST">
+    <label for="x"> Add new item</label>
+    <input type="text" value="item name goes  here" id="x" name="theLabelOfThenNewItem">
+    <input type="submit" value="Add">
+  </form> -->
+
+
+
+<br>
+<%- include('partials/footer.ejs'); %>
+</body>
+</html>

@@ -4,6 +4,8 @@ const session = require('express-session');
 const usersModel = require('./models/w1users');
 const bcrypt = require('bcrypt');
 const bodyParser = require('body-parser');
+let ejs = require('ejs');
+app.set('view engine', 'ejs')
 
 // var MongoDBStore = require('connect-mongodb-session')(session);
 
@@ -210,28 +212,34 @@ app.post('/signup', async (req, res) => {
     res.redirect('/login');
 });
      
-const Joi = require('joi');
-// app.use(express.json());
-app.get('/login', async (req, res) => {
+// const Joi = require('joi');
+// // app.use(express.json());
+// app.get('/login', async (req, res) => {
 
-//sanatize the input using Joi
+// //sanatize the input using Joi
 
-const schema = Joi.object({
-    password: Joi.string()
-})
+// const schema = Joi.object({
+//     password: Joi.string()
+// })
   
-schema.validate({});
-// -> { value: {}, error: '"username" is required' }
-// Also -
-try {
-    const value = await schema.validateAsync({ username: req.body.password });
-}
-catch (err) { 
-    console.log(err)
-    console.log("the password must be a string")
-    return
-}
+// schema.validate({});
+// // -> { value: {}, error: '"username" is required' }
+// // Also -
+// try {
+//     const value = await schema.validateAsync({ username: req.body.password });
+// }
+// catch (err) { 
+//     console.log(err)
+//     console.log("the password must be a string")
+//     return
+// }
 
+   
+
+
+
+
+app.get('/login', (req, res) => {
     res.send(
         '<form action="/login" method="post">'
         + '<input type="text" name="username" placeholder="Enter your username" />'
@@ -269,11 +277,15 @@ app.post('/login', async (req, res) => {
     const result = await usersModel.findOne({
         username: req.body.username,
     })
+   
+    
 
-    if (result && bcrypt.compareSync(req.body.password, result.password)) {
+    // if (result && bcrypt.compareSync(req.body.password, result.password)) {
+    if (result && req.body.password== result.password) {
         req.session.GLOBAL_AUTHENTICATED = true;
         req.session.loggedUsername = req.body.username;
         req.session.loggedPassword = req.body.password;
+        req.session.loggedType = result.type;
         res.redirect('/protectedRoute');
     } else {
         res.send('Invalid username or password'
@@ -284,37 +296,189 @@ app.post('/login', async (req, res) => {
 
 
 
-//only for authenticated users
-const authenticatedOnly = (req, res, next) => {
-    if (!req.session.GLOBAL_AUTHENTICATED) {
-        return res.status(401).json({ error: 'Not authenticated' });
+// //only for authenticated users
+// const authenticatedOnly = (req, res, next) => {
+//     if (!req.session.GLOBAL_AUTHENTICATED) {
+//         return res.status(401).json({ error: 'Not authenticated' });
+//     }
+//     next();
+// }
+
+const protectedRouteforAdminsOnlyMiddlewareFunction = async (req, res, next) => {
+    const result = await usersModel.findOne({
+        username: req.session.loggedUsername,
+      
+    })
+
+        if (result?.type !== 'administrator')
+     {
+        return res.status(403).send('Access denied: You are not authorized to access this resource.');
+    } else {
+        //if no user is loged in, redirect to login page
+        if (!req.session.GLOBAL_AUTHENTICATED) {
+            return res.redirect('/login');
+        }
+
     }
+
+    
     next();
 }
+
+app.use(protectedRouteforAdminsOnlyMiddlewareFunction);
 
 // app.use(authenticatedOnly);
 
 app.use(express.static('public'))
 
-app.get('/protectedRoute', authenticatedOnly, (req, res) => {
+app.get('/protectedRoute', protectedRouteforAdminsOnlyMiddlewareFunction, async (req, res) => {
     //serve one of the puppy images randomly
     // generate a random number between 1 and 3
     const randomImageNumber = Math.floor(Math.random() * 3) + 1;
     const imageName = `00${randomImageNumber}.jfif`;
-    const loggedName = req.session.name;
-    const helloMessage = loggedName ? `Hello ${loggedName}` : 'Hello';
-    const HTMLresponse = `
-    ${helloMessage}
-    <br>
-    <img src="${imageName}" />
-    <br>
-    <a href="signout">Sign Out</a>
-`;
-    res.send(HTMLresponse);
+ 
+const result = await usersModel.findOne({ username: req.session.loggedUsername });
+const resultUsers = await usersModel.find({ username:  {$ne: req.session.loggedUsername}});
+
+// send data to the ejs template
+res.render('protectedRoute', {
+    "x": req.session.loggedUsername,
+    "y": imageName,
+    "isAdmin": req.session.loggedType === 'administrator',
+    // "todos": result.todos,
+    'users': resultUsers,
+
+});
+
+});
+
+app.post('/addNewToDoItem', async (req, res) => {
+
+    // 1 - find the user
+    // 2 - update the array
+    // 3 - update the user's array
+    const updateResult = await usersModel.updateOne({
+      username: req.session.loggedUsername
+    }, {
+      $push: {
+        todos: { "name": req.body.theLabelOfThenNewItem }
+      }
+    }
+    )
+    console.log(updateResult);
+    // 4 - redirect to the protected route
+    res.redirect('/protectedRoute');
+  })
+
+
+//   // change the admin status of a user
+  
+//   app.post('/flipTodoItem', async (req, res) => {
+//     // 1 - find the user
+//     const result = await usersModel.findOne({
+//       username: req.session.loggedUsername
+//     })
+  
+//     // 2 - update the status item (flip)
+//     const newArr = result.type.map((Item) => {
+//       if (todoItem.name == req.body.x) {
+//         todoItem.done = !todoItem.done
+//       }
+//       return todoItem
+//     })
+  
+//     // 3 - update the user's todo array
+//     const updateResult = await usersModel.updateOne({
+//       username: req.session.loggedUsername
+//     }, {
+//       $set: {
+//         todos: newArr
+//       }
+//     }
+//     )
+  
+//     // 4 - redirect to the protected route
+//     res.redirect('/protectedRoute');
+//   })
+  
+  
+
+// app.post('/flipUserStatus', async (req, res) => {
+//     // 1 - find the user
+//     const result = await usersModel.findOne({ username: req.session.loggedUsername });
+
+//     // 2- update the todo item (flip)
+//     const newArr = result.todos.map((userItem) => {
+//         if (userItem.name === req.body.x) {
+//             userItem.type = ! "administrator";
+//         }
+//         return todoItem;
+//         });
+
+//     //3- update the users todo array
+//         const updateResult = await usersModel.updateOne(
+//             { username: req.session.loggedUsername }, {
+//                 $set: {
+//                     todos: newArr
+//                 }
+//             });
+
+//     // 4- redirect to the protected route
+//     res.redirect('/protectedRoute');
+
+
+// });
+
+app.post('/flipUserStatus', async (req, res) => {
+    const result = await usersModel.findOne({ username: req.session.loggedUsername });
+
+    let newUserType = result.type === 'administrator' ? 'user' : 'administrator';
+
+    if (req.body.action === 'promote') {
+        newUserType = 'administrator';
+    } else if (req.body.action === 'demote') {
+        newUserType = 'user';
+    }
+
+    await usersModel.updateOne(
+        { username: req.body.username },
+        { $set: { type: newUserType } }
+    );
+
+    res.redirect('/protectedRoute');
 });
 
 
 
+
+
+
+
+
+
+
+app.post('/deleteTodoItem', async (req, res) => {
+    // 1 - find the user
+
+    const result = await usersModel.findOne({ username: req.session.loggedUsername });
+    // 2 - update the array
+
+    const newArr = result.todos.filter(todoItem => 
+        todoItem.name != req.body.x
+    );
+    
+    //3 - update the user's todo array
+    const updateResult = await usersModel.updateOne(
+        { username: req.session.loggedUsername }, {
+            $set: {
+                todos: newArr
+            }
+        });
+        
+    //4 - redirect to the protected route
+    res.redirect('/protectedRoute');
+
+});
 
 
 //signout route, destroy the session and redirect back to public route
@@ -325,32 +489,33 @@ app.get('/signout', (req, res) => {
 
 // if any non-assigned URLs are entered, display a 404 error message using get()
 app.get('*', (req, res) => {
-    res.status(404).send('404 Error: Page not found');
+    res.render('doesNotExist');
+    
 });
 
 
 
-//only for admins
-const protectedRouteforAdminsOnlyMiddlewareFunction = async (req, res, next) => {
-    const result = await usersModel.findOne({
-        username: req.session.loggedUsername,
+// only for admins
+// const protectedRouteforAdminsOnlyMiddlewareFunction = async (req, res, next) => {
+//     const result = await usersModel.findOne({
+//         username: req.session.loggedUsername,
       
-    })
+//     })
 
-    if (
-        result?.type != 'administrator'
-    ) {
-        return res.send('<h1> You are not an admin </h1>')
-    }
-    next();
-}
+//     if (
+//         result?.type != 'administrator'
+//     ) {
+//         return res.send('<h1> You are not an admin </h1>')
+//     }
+//     next();
+// }
 
-app.use(protectedRouteforAdminsOnlyMiddlewareFunction);
+// app.use(protectedRouteforAdminsOnlyMiddlewareFunction);
 
 
-app.get('/protectedRouteforAdminsOnly', (req, res) => {
-    res.send('<h1>protectedRouteAdminsonly</h1>');
-});
+// app.get('/protectedRouteforAdminsOnly', (req, res) => {
+//     res.send('<h1>protectedRouteAdminsonly</h1>');
+// });
 
 
 
